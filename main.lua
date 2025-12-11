@@ -3,6 +3,8 @@ Object = require("OBJ.Object")
 Entity = require("OBJ.Entity")
 Vector = require("OBJ.Vector")
 Sprite = require("OBJ.Sprite")
+Body = require("OBJ.Body")
+Player = require("Player")
 
 _G.love = require("love")
 
@@ -12,7 +14,7 @@ love.graphics.setBackgroundColor(r, g, b)
 local centerPoint = Vector:new(love.graphics.getWidth()/2, love.graphics.getHeight()/2)
 
 local testEntity = Entity:new(centerPoint, Sprite:new("res/Sprites/Tests/wow-this-guy.png"))
-local myEntity = Entity:new(Vector:new(30,30), Sprite:new("res/Sprites/Tests/Old_Wizardcore-Itch-single.png"))
+local myEntity = Player:new(Vector:new(30,30), Sprite:new("res/Sprites/Tests/Old_Wizardcore-Itch-single.png"), false)
 
 local entityTable = {testEntity, myEntity}
 
@@ -23,10 +25,7 @@ end
 
 function love.update(dt)
     _G.number = _G.number + 1 * dt;
-end
-
-function love.keypressed(key)
-    SetRandomPos()
+    UpdateEntites(dt)
 end
 
 function love.draw()
@@ -41,12 +40,17 @@ function love.draw()
     -- Text Layer
     love.graphics.setColor(0,0,0,255)
     love.graphics.print("The Lua program has been running for " .. tostring(math.floor(_G.number)) .. " seconds!\nFrame Rate: " .. tostring(love.timer.getFPS()), 5, 5)
-
 end
 
 function LoadEntities()
-      for idx = 1, #entityTable, 1 do
+    for idx = 1, #entityTable, 1 do
         entityTable[idx]:load()
+    end
+end
+
+function UpdateEntites(dt)
+    for idx = 1, #entityTable, 1 do
+        entityTable[idx]:update(dt)
     end
 end
 

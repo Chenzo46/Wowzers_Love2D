@@ -13,6 +13,10 @@ function Entity:new(position,sprite)
     return obj
 end
 
+function Entity:update(dt)
+end
+
+
 function Entity:load()
     self.sprite:load()
 end
@@ -22,9 +26,8 @@ function Entity:draw()
     self.sprite:draw(self.position.x - spriteCenter.x, self.position.y - spriteCenter.y)
 end
 
-function Entity:Destroy()
+function Entity:destroy()
     self.sprite.unload()
-
 end
 
 return Entity

@@ -17,8 +17,15 @@ end
 
 function Vector:normalize()
     local mag = self:magnitude()
-    self.x = self.x / mag
-    self.y = self.y / mag
+
+    if mag <= 0 then
+        return self
+    else
+        self.x = self.x / mag
+        self.y = self.y / mag
+
+        return self
+    end
 end
 
 function Vector:magnitude()

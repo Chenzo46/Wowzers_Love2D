@@ -10,6 +10,7 @@ function Object:new(position)
     return obj
 end
 
+
 function Object:Update(dt)
 end
 
