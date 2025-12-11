@@ -1,13 +1,13 @@
 Body = require("OBJ.Body")
 Vector = require("OBJ.Vector")
 
-Player = setmetatable({}, {__index = Body})
+Player = setmetatable({}, Body)
 Player.__index = Player
 
 function Player:new(position, sprite, gravityOn)
     local obj = Body.new(self, position, sprite, gravityOn)
-    obj.moveSpeed = 10
-    obj.counterMovement = 5
+    obj.moveSpeed = 30
+    obj.counterMovement = 10
     return obj
 end
 
@@ -38,7 +38,8 @@ function Player:handleMove(dt)
 end
 
 function Player:counterMove(dt)
-    self.velocity = self.velocity - self.velocity * self.counterMovement * dt
+    local damping = math.exp(-self.counterMovement * dt)
+    self.velocity = self.velocity * damping
 end
 
 function Player:getInputVector()

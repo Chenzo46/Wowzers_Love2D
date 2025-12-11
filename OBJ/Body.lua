@@ -1,7 +1,7 @@
 Entity = require("OBJ.Entity")
 Vector = require("OBJ.Vector")
 
-Body = setmetatable({}, {__index = Entity})
+Body = setmetatable({}, Entity)
 Body.__index = Body
 
 -- Constructor

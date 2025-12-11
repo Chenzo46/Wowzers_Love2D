@@ -2,7 +2,7 @@ Object = require("OBJ.Object")
 Vector = require("OBJ.Vector")
 Sprite = require("OBJ.Sprite")
 
-Entity = setmetatable({}, {__index = Object}) -- Entity extends Object
+Entity = setmetatable({}, Object) -- Entity extends Object
 Entity.__index = Entity
 
 -- @param Vector position
@@ -14,6 +14,7 @@ function Entity:new(position,sprite)
 end
 
 function Entity:update(dt)
+    Object.update(self, dt)
 end
 
 

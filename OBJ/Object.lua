@@ -11,10 +11,10 @@ function Object:new(position)
 end
 
 
-function Object:Update(dt)
+function Object:update(dt)
 end
 
-function Object:Destroy()
+function Object:destroy()
 end
 
 return Object
