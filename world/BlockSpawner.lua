@@ -1,17 +1,19 @@
 Block = require("world.Block")
 Vector = require("OBJ.Vector")
 Sprite = require("OBJ.Sprite")
+Windfield = require("libs.windfield")
 
 BlockSpawner = setmetatable({}, Entity)
 BlockSpawner.__index = BlockSpawner
 
-function BlockSpawner:new(position, spawnTimer, entityHierarchy)
+function BlockSpawner:new(position, spawnTimer, entityHierarchy, physicsWorld)
     local obj = Entity.new(self, position, nil) -- super()
     obj.spawnTime = spawnTimer
     obj.spawnTimeRef = spawnTimer
     obj.entityHierarchy = entityHierarchy
     obj.rightSpawn = 0
     obj.leftSpawn = 0
+    obj.physicsWorld = physicsWorld
     return obj
 end
 
@@ -72,7 +74,11 @@ function BlockSpawner:spawnBlock()
     end
 
     -- Instantiate block into entity hierarchy
-    local block = Block:new(self.position + assignedOffset, Sprite:new("res/Sprites/Obstacles/block.png"),  200, 5, 80)
+    local spawnPosition = self.position + assignedOffset
+    local blockSprite = Sprite:new("res/Sprites/Obstacles/block.png")
+    blockSprite:load()
+    local blockCollider = self.physicsWorld:newRectangleCollider(spawnPosition.x, spawnPosition.y, blockSprite:getBounds().x, blockSprite:getBounds().y)
+    local block = Block:new(spawnPosition, blockSprite, blockCollider, 200, 5, 80)
     block:load()
     table.insert(self.entityHierarchy, block)
 

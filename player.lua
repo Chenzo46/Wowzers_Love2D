@@ -4,9 +4,9 @@ Vector = require("OBJ.Vector")
 Player = setmetatable({}, Body)
 Player.__index = Player
 
-function Player:new(position, sprite, gravityOn)
-    local obj = Body.new(self, position, sprite, gravityOn)
-    obj.moveSpeed = 30
+function Player:new(position, sprite, gravityOn, collider)
+    local obj = Body.new(self, position, sprite, gravityOn, collider)
+    obj.moveSpeed = 3500
     obj.counterMovement = 10
     return obj
 end
@@ -21,6 +21,7 @@ end
 
 function Player:load()
     Body.load(self)
+    self.collider:setFixedRotation(true)
 end
 
 function Player:draw()

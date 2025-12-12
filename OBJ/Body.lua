@@ -1,18 +1,21 @@
 Entity = require("OBJ.Entity")
 Vector = require("OBJ.Vector")
+Windfield = require("libs.windfield")
 
 Body = setmetatable({}, Entity)
 Body.__index = Body
 
 -- Constructor
 
-function Body:new(position, sprite, gravityOn)
+function Body:new(position, sprite, gravityOn, collider)
     local obj = Entity.new(self, position, sprite)
     obj.velocity = Vector:new(0,0)
     obj.gravity = 9.81
     obj.terminalVelocity = 5
     obj.gravityScale = 1
     obj.gravityOn = gravityOn
+    obj.collider = collider
+    obj.colliderOverride = false
     return obj
 end
 
@@ -33,6 +36,7 @@ end
 
 function Body:destroy()
     Entity.destroy(self)
+    self.collider:destroy()
 end
 
 -- Class Implementations
@@ -46,13 +50,25 @@ end
 function Body:applyVelocity(dt)
     self:applyGravity(dt)
     self:clampVelocityY()
-    self.position = self.position + self.velocity
+    self:updateCollider()
 end
 
 function Body:clampVelocityY()
     if self.velocity.y > self.terminalVelocity and self.gravityOn then
         self.velocity.y = self.terminalVelocity
     end
+end
+
+function Body:updateCollider()
+    local deltaVel = self.velocity
+
+   if not self.colliderOverride then
+        self.collider:setLinearVelocity(deltaVel.x, deltaVel.y)
+    else
+        self.collider:setPosition(self.position.x, self.position.y)
+    end
+    self.position.x = self.collider:getX()
+    self.position.y = self.collider:getY()
 end
 
 function Body:setGravityScale(newGravScale)
@@ -67,5 +83,8 @@ function Body:setGravityOn(toggle)
     self.gravityOn = toggle
 end
 
+function Body:setColliderOverride(toggle)
+    self.colliderOverride = toggle
+end
 
 return Body

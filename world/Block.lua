@@ -1,11 +1,11 @@
 Body = require("OBJ.Body")
-
+Windfield = require("libs.windfield")
 
 Block = setmetatable({}, Body)
 Block.__index = Block
 
-function Block:new(position, sprite, fallSpeed, displaceSpeed, displaceFactor)
-    local obj = Body.new(self, position, sprite, false)
+function Block:new(position, sprite, collider, fallSpeed, displaceSpeed, displaceFactor)
+    local obj = Body.new(self, position, sprite, false, collider)
     obj.fallSpeed = fallSpeed
     obj.centerX = position.x
     obj.displaceSpeed = displaceSpeed
@@ -25,6 +25,9 @@ end
 
 function Block:load()
     Body.load(self)
+    self.collider:setFixedRotation(true)
+    self.collider:setMass(500)
+    self:setColliderOverride(true)
 end
 
 function Block:draw()
@@ -38,11 +41,11 @@ end
 -- Class Implementations
 
 function Block:displace(dt)
-    self.position.x = self.centerX +  self.displaceFactor * math.sin(self.timeElapsed * self.displaceSpeed)
+    self.position.x = self.centerX + self.displaceFactor * math.sin(self.timeElapsed * self.displaceSpeed)
 end
 
 function Block:fall(dt)
-    self.position = self.position + Vector:new(0, 1) * self.fallSpeed * dt
+    self.position.y = self.position.y + self.fallSpeed * dt
 end
 
 return Block

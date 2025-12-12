@@ -8,6 +8,7 @@ Player = require("Player")
 Camera = require("world.Camera")
 Block = require("world.Block")
 BlockSpawner = require("world.BlockSpawner")
+Windfield = require("libs.windfield")
 
 _G.love = require("love")
 
@@ -15,25 +16,29 @@ local bgShader
 local r, g, b = love.math.colorFromBytes(130, 186, 151)
 love.graphics.setBackgroundColor(r, g, b)
 
+local world = Windfield.newWorld(0,0)
+
 local centerPoint = Vector:new(love.graphics.getWidth()/2, love.graphics.getHeight()/2)
 local spawnOffset = Vector:new(0, 150)
 
-local player = Player:new(centerPoint + spawnOffset, Sprite:new("res/Sprites/Player/plr.png"), false)
+local playerSpawn = centerPoint + spawnOffset
+local player = Player:new(playerSpawn, Sprite:new("res/Sprites/Player/plr.png"), false, world:newBSGRectangleCollider(playerSpawn.x, playerSpawn.y, 20,20, 5))
 local camera = Camera:new(player.position - centerPoint - spawnOffset, player, 1)
 
 
-local testEntity = Entity:new(centerPoint, Sprite:new("res/Sprites/Tests/wow-this-guy.png"))
-local blockOne = Block:new(centerPoint + Vector:new(150, -100), Sprite:new("res/Sprites/Obstacles/block.png"), 100, 5, 80)
+--local testEntity = Entity:new(centerPoint, Sprite:new("res/Sprites/Tests/wow-this-guy.png"))
+--local blockOne = Block:new(centerPoint + Vector:new(150, -100), Sprite:new("res/Sprites/Obstacles/block.png"), 100, 5, 80)
 
 local entityTable = {Camera, player}
 
-local blockSpawner = BlockSpawner:new(centerPoint - Vector:new(0, 500), 1, entityTable)
-
+local blockSpawner = BlockSpawner:new(centerPoint - Vector:new(0, 500), 1, entityTable, world)
 table.insert(entityTable, 1, blockSpawner)
+
 
 function love.load()
     _G.number = 0;
     bgShader = love.graphics.newShader("shaders/balatroBack.glsl")
+
     --camera:setFollowTarget(myEntity)
     LoadEntities()
 end
@@ -41,7 +46,11 @@ end
 function love.update(dt)
     _G.number = _G.number + 1 * dt;
     bgShader:send("time", love.timer.getTime())
+
+    
+
     UpdateEntites(dt)
+    world:update(dt)
 end
 
 function love.draw()
@@ -61,6 +70,7 @@ function love.draw()
     -- Gizmo Layer
     --love.graphics.setColor(love.math.colorFromBytes(255, 0, 0))
     --love.graphics.circle("line", myEntity.position.x, myEntity.position.y, 5)
+    world:draw()
 
     -- Text Layer
     love.graphics.setColor(0,0,0,255)

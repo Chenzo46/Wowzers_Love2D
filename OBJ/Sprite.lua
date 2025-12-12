@@ -28,4 +28,8 @@ function Sprite:getcenter()
     return Vector:new(self.img:getPixelWidth()/2, self.img:getPixelHeight()/2)
 end
 
+function Sprite:getBounds()
+    return Vector:new(self.img:getWidth(), self.img:getHeight())
+end
+
 return Sprite
