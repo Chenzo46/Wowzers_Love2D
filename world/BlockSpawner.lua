@@ -82,7 +82,7 @@ function BlockSpawner:spawnBlock()
     block:load()
     table.insert(self.entityHierarchy, block)
 
-    print("block spawned")
+    --print("block spawned")
 end
 
 return BlockSpawner

@@ -22,7 +22,7 @@ local centerPoint = Vector:new(love.graphics.getWidth()/2, love.graphics.getHeig
 local spawnOffset = Vector:new(0, 150)
 
 local playerSpawn = centerPoint + spawnOffset
-local player = Player:new(playerSpawn, Sprite:new("res/Sprites/Player/plr.png"), false, world:newBSGRectangleCollider(playerSpawn.x, playerSpawn.y, 20,20, 5))
+local player = Player:new(playerSpawn, Sprite:new("res/Sprites/Player/plr.png"), false, world:newBSGRectangleCollider(playerSpawn.x, playerSpawn.y, 30,30, 5))
 local camera = Camera:new(player.position - centerPoint - spawnOffset, player, 1)
 
 
@@ -47,7 +47,7 @@ function love.load()
     world:addCollisionClass("Obstacle", {ignores = {"Obstacle"}})
 
     -- Event init
-    TestColliderCallback()
+    --TestColliderCallback()
     
     -- world init
     LoadEntities()
@@ -77,7 +77,7 @@ function love.draw()
     -- Gizmo Layer
     --love.graphics.setColor(love.math.colorFromBytes(255, 0, 0))
     --love.graphics.circle("line", myEntity.position.x, myEntity.position.y, 5)
-    world:draw()
+    --world:draw() -- Draws Colliders (Leave commented out for release builds)
 
     -- Text Layer
     love.graphics.setColor(0,0,0,255)
@@ -85,6 +85,13 @@ function love.draw()
 
     love.graphics.pop()
 end
+
+function love.keypressed(key)
+    if key == "escape" then
+        love.event.quit()
+    end
+end
+
 
 function TestColliderCallback()
     player.onPlayerDie:subscribe(function ()

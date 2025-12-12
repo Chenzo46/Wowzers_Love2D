@@ -17,10 +17,10 @@ end
 -- Essential Inherited Methods
 
 function Block:update(dt) -- Make sure anything that inherits from body has the super function called after all extra velocity calculations
-    self.timeElapsed = self.timeElapsed + dt    
     self:displace(dt)
     self:fall(dt)
     Body.update(self, dt)
+    self:lifeTime(dt)
 end
 
 function Block:load()
@@ -47,6 +47,14 @@ end
 
 function Block:fall(dt)
     self.position.y = self.position.y + self.fallSpeed * dt
+end
+
+function Block:lifeTime(dt)
+    self.timeElapsed = self.timeElapsed + dt    
+    if self.timeElapsed >= 4 then
+        print("block destroyed")
+        self:destroy()
+    end
 end
 
 return Block
