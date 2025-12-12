@@ -7,7 +7,7 @@ Sprite.__index = Sprite
 function Sprite:new(path)
     local obj = {path = path}
     setmetatable(obj, self)
-    self.img = nil
+    self.img = love.graphics.newImage(path)
     return obj
 end
 
@@ -20,8 +20,8 @@ function Sprite:draw(posx, posy)
 end
 
 function Sprite:unload()
-    self.rect = nil
-    collectgarbage()
+    self.img:release()
+    self.img = nil
 end
 
 function Sprite:getcenter()

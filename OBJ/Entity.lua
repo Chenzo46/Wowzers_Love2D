@@ -28,7 +28,8 @@ function Entity:draw()
 end
 
 function Entity:destroy()
-    self.sprite.unload()
+    self.sprite:unload()
+    Object.destroy(self)
 end
 
 return Entity

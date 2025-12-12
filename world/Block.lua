@@ -25,6 +25,7 @@ end
 
 function Block:load()
     Body.load(self)
+    self.collider:setCollisionClass("Obstacle")
     self.collider:setFixedRotation(true)
     self.collider:setMass(500)
     self:setColliderOverride(true)

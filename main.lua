@@ -36,21 +36,28 @@ table.insert(entityTable, 1, blockSpawner)
 
 
 function love.load()
+    -- Random timer test
     _G.number = 0;
+    
+    -- Background
     bgShader = love.graphics.newShader("shaders/balatroBack.glsl")
 
-    --camera:setFollowTarget(myEntity)
+    -- Collision Init
+    world:addCollisionClass("Player", {ignores = {"Player"}})
+    world:addCollisionClass("Obstacle", {ignores = {"Obstacle"}})
+
+    -- Event init
+    TestColliderCallback()
+    
+    -- world init
     LoadEntities()
 end
 
 function love.update(dt)
+    world:update(dt)
     _G.number = _G.number + 1 * dt;
     bgShader:send("time", love.timer.getTime())
-
-    
-
     UpdateEntites(dt)
-    world:update(dt)
 end
 
 function love.draw()
@@ -79,6 +86,12 @@ function love.draw()
     love.graphics.pop()
 end
 
+function TestColliderCallback()
+    player.onPlayerDie:subscribe(function ()
+        print("Player hit!")
+    end)
+end
+
 function LoadEntities()
     for idx = 1, #entityTable, 1 do
         entityTable[idx]:load()
@@ -86,8 +99,17 @@ function LoadEntities()
 end
 
 function UpdateEntites(dt)
+    local toDestroy = {}
     for idx = 1, #entityTable, 1 do
-        entityTable[idx]:update(dt)
+        if entityTable[idx].destroyed then
+            table.insert(toDestroy, idx)
+        else
+            entityTable[idx]:update(dt)
+        end
+    end
+
+    for idx = 1, #toDestroy, 1 do
+        table.remove(entityTable, toDestroy[idx])
     end
 end
 

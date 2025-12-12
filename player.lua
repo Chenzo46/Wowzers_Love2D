@@ -1,5 +1,6 @@
 Body = require("OBJ.Body")
 Vector = require("OBJ.Vector")
+Event = require("OBJ.Event")
 
 Player = setmetatable({}, Body)
 Player.__index = Player
@@ -8,6 +9,7 @@ function Player:new(position, sprite, gravityOn, collider)
     local obj = Body.new(self, position, sprite, gravityOn, collider)
     obj.moveSpeed = 3500
     obj.counterMovement = 10
+    obj.onPlayerDie = Event:new()
     return obj
 end
 
@@ -16,11 +18,13 @@ end
 function Player:update(dt) -- Make sure anything that inherits from body has the super function called after all extra velocity calculations
     self:handleMove(dt)
     self:counterMove(dt)
+    self:listenForObstacles()
     Body.update(self,dt)
 end
 
 function Player:load()
     Body.load(self)
+    self.collider:setCollisionClass("Player")
     self.collider:setFixedRotation(true)
 end
 
@@ -64,6 +68,13 @@ function Player:getInputVector()
     end
 
     return Vector:new(xInput, yInput)
+end
+
+function Player:listenForObstacles()
+    if self.collider:enter("Obstacle") then
+        self.onPlayerDie:emit()
+        self:destroy()
+    end
 end
 
 

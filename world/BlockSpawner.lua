@@ -78,7 +78,7 @@ function BlockSpawner:spawnBlock()
     local blockSprite = Sprite:new("res/Sprites/Obstacles/block.png")
     blockSprite:load()
     local blockCollider = self.physicsWorld:newRectangleCollider(spawnPosition.x, spawnPosition.y, blockSprite:getBounds().x, blockSprite:getBounds().y)
-    local block = Block:new(spawnPosition, blockSprite, blockCollider, 200, 5, 80)
+    local block = Block:new(spawnPosition, blockSprite, blockCollider, 250, 6, 100)
     block:load()
     table.insert(self.entityHierarchy, block)
 

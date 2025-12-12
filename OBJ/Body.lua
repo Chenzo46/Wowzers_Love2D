@@ -35,8 +35,9 @@ function Body:draw()
 end
 
 function Body:destroy()
-    Entity.destroy(self)
     self.collider:destroy()
+    self.collider = nil
+    Entity.destroy(self)
 end
 
 -- Class Implementations
@@ -60,9 +61,11 @@ function Body:clampVelocityY()
 end
 
 function Body:updateCollider()
+    if not self.collider then return end
+
     local deltaVel = self.velocity
 
-   if not self.colliderOverride then
+    if not self.colliderOverride then
         self.collider:setLinearVelocity(deltaVel.x, deltaVel.y)
     else
         self.collider:setPosition(self.position.x, self.position.y)
