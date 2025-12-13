@@ -41,6 +41,8 @@ local gameLogo
 local highScore
 local isNewHighScore = false
 
+local wglpath = "highscore.txt"
+
 -- Gameplay loop
 
 function love.load()
@@ -150,7 +152,7 @@ function love.draw()
 
     if canReset or not gameStarted then 
         love.graphics.setFont(gameFont)
-        love.graphics.print("Press \"ESC\" to quit", 5, 5)-- Comment this out if building to webgl
+        --love.graphics.print("Press \"ESC\" to quit", 5, 5)-- Comment this out if building to webgl
     end
 
     if gameStarted then
@@ -168,9 +170,9 @@ function love.draw()
 end
 
 function love.keypressed(key)
-    if key == "escape" then -- Comment this out if building to webgl
-        love.event.quit()
-    end
+    --if key == "escape" then -- Comment this out if building to webgl
+        --love.event.quit()
+    --end
 
     HandleReset(key)
 
@@ -309,29 +311,17 @@ function LerpDifficulty()
 end
 
 function LoadHighScore()
-    if love._os == "Web" then
-        local js = require("js")
-        local stored = js.global.localStorage:getItem("highscore") or "0"
-        return tonumber(stored) or 0
-    else
-        local score = 0
-        if love.filesystem.getInfo("highscore.txt") then
-            local contents = love.filesystem.read("highscore.txt") or ""
-            score = tonumber(contents) or 0
-        end
-        return score
+    local score = 0
+    if love.filesystem.getInfo(wglpath) then
+        local contents = love.filesystem.read(wglpath) or ""
+        score = tonumber(contents) or 0
     end
+    return score
 end
 
-function SaveHighScore()
-    if love._os == "Web" then
-        local js = require("js")
-        js.global.localStorage:setItem("highscore", tostring(_G.score))
-    else
-        love.filesystem.write("highscore.txt", tostring(_G.score))
-    end
+function SaveHighScore(score)
+    love.filesystem.write(wglpath, tostring(score))
 end
-
 function _G.incScore()
     _G.score = _G.score + 1
     scoreSFX:play()
