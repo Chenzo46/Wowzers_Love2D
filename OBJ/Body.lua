@@ -90,4 +90,9 @@ function Body:setColliderOverride(toggle)
     self.colliderOverride = toggle
 end
 
+function Body:setPosition(pos)
+    self.collider:setPosition(pos.x, pos.y)
+    self.position = Vector:new(pos.x, pos.y)
+end
+
 return Body

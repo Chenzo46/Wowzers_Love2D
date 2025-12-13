@@ -20,7 +20,6 @@ function Sprite:draw(posx, posy)
 end
 
 function Sprite:unload()
-    self.img:release()
     self.img = nil
 end
 

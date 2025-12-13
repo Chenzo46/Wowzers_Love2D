@@ -12,28 +12,26 @@ Windfield = require("libs.windfield")
 
 _G.love = require("love")
 
+-- Global game vars
+
 local bgShader
-local r, g, b = love.math.colorFromBytes(130, 186, 151)
-love.graphics.setBackgroundColor(r, g, b)
-
-local world = Windfield.newWorld(0,0)
-
+local world
+local gameMusic
 local centerPoint = Vector:new(love.graphics.getWidth()/2, love.graphics.getHeight()/2)
 local spawnOffset = Vector:new(0, 150)
-
 local playerSpawn = centerPoint + spawnOffset
-local player = Player:new(playerSpawn, Sprite:new("res/Sprites/Player/plr.png"), false, world:newBSGRectangleCollider(playerSpawn.x, playerSpawn.y, 30,30, 5))
-local camera = Camera:new(player.position - centerPoint - spawnOffset, player, 1)
+local entityTable = {}
+local canReset = false
+local gameStarted = false
+local gameFont
 
+-- Game Vars
 
---local testEntity = Entity:new(centerPoint, Sprite:new("res/Sprites/Tests/wow-this-guy.png"))
---local blockOne = Block:new(centerPoint + Vector:new(150, -100), Sprite:new("res/Sprites/Obstacles/block.png"), 100, 5, 80)
+local player
+local blockSpawner
+local gameLogo
 
-local entityTable = {Camera, player}
-
-local blockSpawner = BlockSpawner:new(centerPoint - Vector:new(0, 500), 1, entityTable, world)
-table.insert(entityTable, 1, blockSpawner)
-
+-- Gameplay loop
 
 function love.load()
     -- Random timer test
@@ -42,15 +40,25 @@ function love.load()
     -- Background
     bgShader = love.graphics.newShader("shaders/balatroBack.glsl")
 
-    -- Collision Init
+    -- UI init
+    gameFont = love.graphics.newFont("fonts/Born2bSportyFS.ttf", 22)
+    gameLogo = Entity:new(centerPoint, Sprite:new("res/Sprites/Text-Images/wl_gamelogo.png"))
+
+    table.insert(entityTable, gameLogo)
+
+    -- Physics World init
+    world = Windfield.newWorld(0,0)
     world:addCollisionClass("Player", {ignores = {"Player"}})
     world:addCollisionClass("Obstacle", {ignores = {"Obstacle"}})
 
-    -- Event init
-    --TestColliderCallback()
-    
-    -- world init
-    LoadEntities()
+    -- Sound init
+    gameMusic = love.audio.newSource("Sound/Music/Wowzers.ogg", "stream")
+    gameMusic:play()
+    gameMusic:setVolume(0.02)
+
+    -- Hierarchy init
+    --InitLevel()
+
 end
 
 function love.update(dt)
@@ -58,44 +66,94 @@ function love.update(dt)
     _G.number = _G.number + 1 * dt;
     bgShader:send("time", love.timer.getTime())
     UpdateEntites(dt)
+    LoopMusic()
 end
 
 function love.draw()
     love.graphics.push()
-    love.graphics.scale(camera.scale, camera.scale)
-    love.graphics.translate(-camera.position.x, -camera.position.y)
 
     --bg layer
+    love.graphics.setColor(1,1,1,255)
     love.graphics.setShader(bgShader)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setShader()
 
+        
+    love.graphics.pop()
+
     -- Entity Layer
-    love.graphics.setColor(1,1,1,255)
+    --love.graphics.setColor(1,1,1,255)
     DrawEntities()
 
     -- Gizmo Layer
     --love.graphics.setColor(love.math.colorFromBytes(255, 0, 0))
     --love.graphics.circle("line", myEntity.position.x, myEntity.position.y, 5)
+    --love.graphics.circle("line", playerSpawn.x, playerSpawn.y, 5)
     --world:draw() -- Draws Colliders (Leave commented out for release builds)
 
-    -- Text Layer
-    love.graphics.setColor(0,0,0,255)
-    love.graphics.print("The Lua program has been running for " .. tostring(math.floor(_G.number)) .. " seconds!\nFrame Rate: " .. tostring(love.timer.getFPS()), 5, 5)
 
-    love.graphics.pop()
+    -- Game Text Layer
+    
+    love.graphics.setColor(0,0,0,255)
+
+    if canReset then
+        love.graphics.setFont(gameFont)
+        love.graphics.print("Press \"r\" to reset", playerSpawn.x - 65, playerSpawn.y)
+    end
+
+    if not gameStarted then
+        love.graphics.setFont(gameFont)
+        love.graphics.print("Press \"E\" to start", playerSpawn.x - 65, playerSpawn.y)
+    end
+
+    -- Debug Text Layer
+    --love.graphics.setColor(0,0,0,255)
+    --love.graphics.print("The Lua program has been running for " .. tostring(math.floor(_G.number)) .. " seconds!\nFrame Rate: " .. tostring(love.timer.getFPS()), 5, 5)
+
 end
 
 function love.keypressed(key)
     if key == "escape" then
         love.event.quit()
     end
+
+    HandleReset(key)
+
+    ListenForGameStart(key)
 end
 
+-- Prefab Functions
 
-function TestColliderCallback()
+function CreateNewPlayer()
+    return Player:new(Vector:new(playerSpawn.x, playerSpawn.y), Sprite:new("res/Sprites/Player/plr.png"), false, world:newBSGRectangleCollider(playerSpawn.x, playerSpawn.y, 30,30, 5))
+end
+
+function CreateBlockSpawner()
+    return BlockSpawner:new(centerPoint - Vector:new(0, 500), 1, entityTable, world)
+end
+
+-- Assist Functions
+
+function InitLevel()
+    -- Object Reference Init
+    player = CreateNewPlayer()
+    blockSpawner = CreateBlockSpawner()
+    table.insert(entityTable, blockSpawner)
+    table.insert(entityTable, player)
+
+    player:setPosition(playerSpawn)
+
+    -- Event init
+    PlayerDeathCallback()
+    
+    -- Entity init
+    LoadEntities()
+end
+
+function PlayerDeathCallback()
     player.onPlayerDie:subscribe(function ()
-        print("Player hit!")
+        print("You lose!")
+        canReset = true
     end)
 end
 
@@ -106,23 +164,51 @@ function LoadEntities()
 end
 
 function UpdateEntites(dt)
-    local toDestroy = {}
-    for idx = 1, #entityTable, 1 do
+    for idx = #entityTable, 1, -1 do
         if entityTable[idx].destroyed then
-            table.insert(toDestroy, idx)
+            table.remove(entityTable, idx)
         else
             entityTable[idx]:update(dt)
         end
-    end
-
-    for idx = 1, #toDestroy, 1 do
-        table.remove(entityTable, toDestroy[idx])
     end
 end
 
 function DrawEntities()
     for idx = 1, #entityTable, 1 do
         entityTable[idx]:draw()
+    end
+end
+
+function UnloadLevel()
+     for i = #entityTable, 1, -1 do
+        entityTable[i]:destroy()
+        table.remove(entityTable, i)
+    end
+end
+
+function ResetLevel()
+    UnloadLevel()
+    InitLevel()
+    canReset = false
+end
+
+function HandleReset(key)
+    if key == "r" and canReset then
+       ResetLevel()
+    end
+end
+
+function ListenForGameStart(key)
+    if key == "e" and not gameStarted then
+        gameStarted = true
+        gameLogo:setEnabled(false)
+        InitLevel()
+    end
+end
+
+function LoopMusic()
+    if not gameMusic:isPlaying() then
+        gameMusic:play()
     end
 end
 
