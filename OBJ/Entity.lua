@@ -31,7 +31,9 @@ function Entity:draw()
 end
 
 function Entity:destroy()
-    self.sprite:unload()
+    if self.sprite ~= nil then
+        self.sprite:unload()
+    end
     Object.destroy(self)
 end
 

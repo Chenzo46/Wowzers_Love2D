@@ -19,6 +19,7 @@ function Player:update(dt) -- Make sure anything that inherits from body has the
     self:handleMove(dt)
     self:counterMove(dt)
     self:listenForObstacles()
+    self:outOfBoundsHandler()
     Body.update(self,dt)
 end
 
@@ -70,11 +71,25 @@ function Player:getInputVector()
     return Vector:new(xInput, yInput)
 end
 
+function Player:setSpeed(val)
+    self.moveSpeed = val
+end
+
 function Player:listenForObstacles()
     if self.collider:enter("Obstacle") then
-        self.onPlayerDie:emit()
-        self:destroy()
+        self:die()
     end
+end
+
+function Player:outOfBoundsHandler()
+    if (self.position.x < -10 or self.position.x > 370) or (self.position.y < -10 or self.position.y > 650) then
+        self:die()
+    end
+end
+
+function Player:die()
+    self.onPlayerDie:emit()
+    self:destroy()
 end
 
 

@@ -11,12 +11,12 @@ BlockSpawner = require("world.BlockSpawner")
 Windfield = require("libs.windfield")
 
 _G.love = require("love")
+_G.score = 0
 
 -- Global game vars
 
 local bgShader
 local world
-local gameMusic
 local centerPoint = Vector:new(love.graphics.getWidth()/2, love.graphics.getHeight()/2)
 local spawnOffset = Vector:new(0, 150)
 local playerSpawn = centerPoint + spawnOffset
@@ -24,6 +24,14 @@ local entityTable = {}
 local canReset = false
 local gameStarted = false
 local gameFont
+local scoreFont
+
+-- Audio
+
+local gameMusic
+local scoreSFX
+local startSFX
+local dieSFX
 
 -- Game Vars
 
@@ -34,6 +42,11 @@ local gameLogo
 -- Gameplay loop
 
 function love.load()
+    
+
+    local icon = love.image.newImageData("res/Sprites/Player/plr.png") -- must be an ImageData
+    love.window.setIcon(icon)
+
     -- Random timer test
     _G.number = 0;
     
@@ -42,7 +55,8 @@ function love.load()
 
     -- UI init
     gameFont = love.graphics.newFont("fonts/Born2bSportyFS.ttf", 22)
-    gameLogo = Entity:new(centerPoint, Sprite:new("res/Sprites/Text-Images/wl_gamelogo.png"))
+    scoreFont = love.graphics.newFont("fonts/Born2bSportyFS.ttf", 32)
+    gameLogo = Entity:new(centerPoint - Vector:new(0,20), Sprite:new("res/Sprites/Text-Images/wl_gamelogo.png"))
 
     table.insert(entityTable, gameLogo)
 
@@ -50,11 +64,21 @@ function love.load()
     world = Windfield.newWorld(0,0)
     world:addCollisionClass("Player", {ignores = {"Player"}})
     world:addCollisionClass("Obstacle", {ignores = {"Obstacle"}})
+    world:addCollisionClass("ScoreLine", {ignores = {"ScoreLine", "Obstacle"}})
+
 
     -- Sound init
     gameMusic = love.audio.newSource("Sound/Music/Wowzers.ogg", "stream")
     gameMusic:play()
     gameMusic:setVolume(0.02)
+
+    scoreSFX = love.audio.newSource("Sound/SFX/scoreInc.ogg", "static")
+    startSFX = love.audio.newSource("Sound/SFX/startRun.ogg", "static")
+    dieSFX = love.audio.newSource("Sound/SFX/wowzers_explode.ogg", "static")
+
+    scoreSFX:setVolume(0.1)
+    startSFX:setVolume(0.1)
+    dieSFX:setVolume(0.1)
 
     -- Hierarchy init
     --InitLevel()
@@ -67,6 +91,8 @@ function love.update(dt)
     bgShader:send("time", love.timer.getTime())
     UpdateEntites(dt)
     LoopMusic()
+    LerpDifficulty()
+    --print("Lerp Test: " .. tostring(Lerp(0, 5, _G.number / 20))) -- 0 lerps to 5 in 20 seconds
 end
 
 function love.draw()
@@ -106,10 +132,18 @@ function love.draw()
         love.graphics.print("Press \"E\" to start", playerSpawn.x - 65, playerSpawn.y)
     end
 
+    if gameStarted then
+        local scoreStr = tostring(_G.score)
+        love.graphics.setFont(scoreFont)
+        love.graphics.print(scoreStr, playerSpawn.x - 5, 20)
+        love.graphics.setColor(1,1,1,255)
+        love.graphics.setFont(scoreFont)
+        love.graphics.print(scoreStr, playerSpawn.x - 3, 17)
+    end
+
     -- Debug Text Layer
     --love.graphics.setColor(0,0,0,255)
     --love.graphics.print("The Lua program has been running for " .. tostring(math.floor(_G.number)) .. " seconds!\nFrame Rate: " .. tostring(love.timer.getFPS()), 5, 5)
-
 end
 
 function love.keypressed(key)
@@ -129,7 +163,7 @@ function CreateNewPlayer()
 end
 
 function CreateBlockSpawner()
-    return BlockSpawner:new(centerPoint - Vector:new(0, 500), 1, entityTable, world)
+    return BlockSpawner:new(centerPoint - Vector:new(0, 500), 2, 0.75, entityTable, world)
 end
 
 -- Assist Functions
@@ -148,11 +182,14 @@ function InitLevel()
     
     -- Entity init
     LoadEntities()
+
+    _G.number = 0;
 end
 
 function PlayerDeathCallback()
     player.onPlayerDie:subscribe(function ()
         print("You lose!")
+        dieSFX:play()
         canReset = true
     end)
 end
@@ -190,11 +227,14 @@ function ResetLevel()
     UnloadLevel()
     InitLevel()
     canReset = false
+    _G.number = 0
+    _G.score = 0
 end
 
 function HandleReset(key)
     if key == "r" and canReset then
-       ResetLevel()
+        startSFX:play()
+        ResetLevel()
     end
 end
 
@@ -202,6 +242,7 @@ function ListenForGameStart(key)
     if key == "e" and not gameStarted then
         gameStarted = true
         gameLogo:setEnabled(false)
+        startSFX:play()
         InitLevel()
     end
 end
@@ -216,4 +257,29 @@ function SetRandomPos()
     if love.keyboard.isDown("r") then
         player.position = Vector:new(math.random(100, love.graphics.getWidth()-100), math.random(100, love.graphics.getHeight()-100))
     end
+end
+
+function Lerp(a, b, t)
+    local tc = t
+
+    if t > 1 then
+        tc = 1
+    elseif t < 0 then
+        tc = 0
+    end
+
+    return tc * (b - a) + a
+end
+
+function LerpDifficulty()
+    if gameStarted and not canReset then
+        blockSpawner:setSpawnTimer(Lerp(blockSpawner:getMinSpawnTime(), blockSpawner:getMaxSpawnTime(), _G.number / 120))
+        player:setSpeed(Lerp(3500, 6000,  _G.number / 120))
+    end
+
+end
+
+function _G.incScore()
+    _G.score = _G.score + 1
+    scoreSFX:play()
 end
